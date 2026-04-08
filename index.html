@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validador de Cierre Pro - Mundo</title>
+    <style>
+        /* =========================================
+           TEMAS Y VARIABLES (AZUL CORPORATIVO MUNDO)
+           ========================================= */
+        :root {
+            /* COLORES OFICIALES MUNDO (AZUL) */
+            --mundo-primary: #002B7F; 
+            --mundo-secondary: #0055FF; 
+            --mundo-gradient: linear-gradient(135deg, #002B7F 0%, #0055FF 100%);
+            
+            /* TEMA CLARO */
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-header: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --input-bg: #ffffff;
+            --input-focus-ring: rgba(0, 85, 255, 0.15);
+            --highlight-bg: #eff6ff; 
+            --highlight-text: #002B7F;
+            --btn-text: #ffffff;
+            --success: #10b981;
+            --success-bg: #ecfdf5;
+            --warning-bg: #fffbeb;
+            --warning-border: #f59e0b;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --radius-md: 8px;
+            --radius-lg: 12px;
+        }
+
+        /* 🔴 TEMA GRABACIÓN (ROJO/ALERTA) */
+        body.modo-grabacion {
+            --mundo-primary: #b91c1c; 
+            --mundo-secondary: #ef4444; 
+            --mundo-gradient: linear-gradient(135deg, #b91c1c 0%, #ef4444 100%);
+            --input-focus-ring: rgba(239, 68, 68, 0.15);
+            --highlight-bg: #fef2f2;
+            --highlight-text: #b91c1c;
+        }
+
+        [data-theme="dark"] {
+            /* TEMA OSCURO */
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --bg-header: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --input-bg: #0f172a;
+            --input-focus-ring: rgba(96, 165, 250, 0.25);
+            --highlight-bg: #1e3a8a;
+            --highlight-text: #bfdbfe;
+            --btn-text: #ffffff;
+            --success: #34d399;
+            --success-bg: rgba(16, 185, 129, 0.1);
+            
+            --mundo-primary: #60a5fa;
+            --mundo-secondary: #93c5fd;
+            --mundo-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+        }
+
+        /* 🔴 TEMA GRABACIÓN OSCURO */
+        body[data-theme="dark"].modo-grabacion {
+            --mundo-primary: #f87171;
+            --mundo-secondary: #fca5a5;
+            --mundo-gradient: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            --input-focus-ring: rgba(248, 113, 113, 0.25);
+            --highlight-bg: #450a0a;
+            --highlight-text: #fecaca;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+            background-color: var(--bg-body);
+            margin: 0;
+            padding-bottom: 60px;
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* =========================================
+           ENCABEZADO
+           ========================================= */
+        header {
+            background-color: var(--bg-header);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--mundo-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .header-controls { display: flex; align-items: center; gap: 24px; }
+
+        .theme-btn {
+            background: var(--bg-body); border: 1px solid var(--border-color);
+            color: var(--text-muted); padding: 6px 12px; border-radius: 20px;
+            cursor: pointer; font-weight: 500; font-size: 0.85rem;
+            display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+        }
+        .theme-btn:hover { color: var(--text-main); border-color: var(--text-muted); }
+
+        .stepper {
+            display: flex; align-items: center; gap: 10px; font-size: 0.85rem;
+            font-weight: 600; color: var(--text-muted);
+        }
+        .step { display: flex; align-items: center; gap: 6px; }
+        .step.active { color: var(--mundo-secondary); }
+        .step-num {
+            background: var(--border-color); color: var(--bg-body);
+            width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-size: 0.8rem; font-weight: 700;
+        }
+        .step.active .step-num { background: var(--mundo-gradient); color: white; }
+        .step-divider { height: 1px; width: 24px; background: var(--border-color); }
+
+        /* =========================================
+           VISTAS Y CONTENEDORES
+           ========================================= */
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .view { display: none; animation: fadeIn 0.3s ease forwards; }
+        .view.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-form {
+            background: var(--bg-card); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm); padding: 40px; border: 1px solid var(--border-color);
+        }
+
+        /* TIPO DE VALIDACIÓN (MASTER SWITCH) */
+        .master-switch-container {
+            background: var(--bg-body); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); padding: 16px; margin-bottom: 32px;
+        }
+        .master-switch-container h3 {
+            margin: 0 0 12px 0; color: var(--text-main); font-size: 0.95rem;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .tabs-horizontales {
+            display: flex; gap: 8px; margin-bottom: 32px;
+            border-bottom: 2px solid var(--border-color); padding-bottom: 0;
+        }
+        .tab-btn {
+            flex: none; background: transparent; border: none; color: var(--text-muted);
+            font-size: 1rem; font-weight: 600; padding: 12px 24px;
+            cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+            transition: all 0.2s ease;
+        }
+        .tab-btn:hover { color: var(--mundo-secondary); }
+        .tab-btn.active { color: var(--mundo-secondary); border-bottom: 2px solid var(--mundo-secondary); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Formulario GRID MINIMALISTA */
+        .grid-form {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;
+        }
+        .span-2 { grid-column: span 2; }
+        .span-full { grid-column: 1 / -1; }
+        @media (max-width: 768px) { .span-2 { grid-column: span 1; } }
+
+        label {
+            display: block; font-size: 0.8rem; font-weight: 600;
+            color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select {
+            width: 100%; padding: 10px 12px; background-color: var(--input-bg);
+            border: 1px solid var(--border-color); color: var(--text-main);
+            border-radius: var(--radius-md); font-size: 0.95rem; box-sizing: border-box;
+            font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none; border-color: var(--mundo-secondary);
+            box-shadow: 0 0 0 3px var(--input-focus-ring);
+        }
+
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
+        .checkbox-group label {
+            font-weight: 500; font-size: 0.9rem; color: var(--text-main);
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--mundo-secondary); cursor: pointer; }
+
+        .toggle-group {
+            display: flex; background: var(--bg-body); border: 1px solid var(--border-color);
+            border-radius: var(--radius-md); overflow: hidden; padding: 4px;
+        }
+        .toggle-group input[type="radio"] { display: none; }
+        .toggle-group label {
+            flex: 1; text-align: center; padding: 8px; margin: 0; cursor: pointer;
+            font-size: 0.85rem; font-weight: 600; color: var(--text-muted); border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .toggle-group input[type="radio"]:checked + label {
+            background: var(--bg-card); color: var(--mundo-primary); box-shadow: var(--shadow-sm);
+        }
+
+        .master-switch-container .toggle-group { padding: 6px; border-radius: 10px; }
+        .master-switch-container .toggle-group label { font-size: 1rem; padding: 14px; border-radius: 6px; }
+        .master-switch-container .toggle-group input[type="radio"]:checked + label {
+            background: var(--mundo-gradient); color: #ffffff; box-shadow: var(--shadow-md); border-color: transparent;
+        }
+
+        .sub-caja {
+            background: var(--bg-body); padding: 16px; border-radius: var(--radius-md); 
+            border: 1px solid var(--border-color); margin-top: 8px;
+        }
+        .btn-linea {
+            background: var(--highlight-bg); border: 1px dashed var(--mundo-secondary);
+            color: var(--mundo-secondary); padding: 12px; border-radius: var(--radius-md);
+            font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%;
+        }
+        .btn-linea:hover { background: var(--mundo-secondary); color: #fff; }
+
+        .btn-accion-principal {
+            background: var(--mundo-gradient); color: #fff; border: none; padding: 16px 32px;
+            font-size: 1.1rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer;
+            display: flex; justify-content: center; align-items: center; gap: 8px; transition: opacity 0.2s;
+            width: 100%; margin-top: 32px; letter-spacing: 0.5px;
+        }
+        .btn-accion-principal:hover { opacity: 0.9; }
+
+        /* =========================================
+           VISTA 2: LECTURA ENFOCADA (TELEPROMPTER)
+           ========================================= */
+        .lectura-wrapper { max-width: 800px; margin: 0 auto; }
+
+        .card-lectura {
+            background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+            padding: 50px; border: 1px solid var(--border-color);
+        }
+
+        .estilo-guion { font-size: 1.15rem; line-height: 1.7; color: var(--text-main); }
+        .estilo-guion h3 { color: var(--mundo-primary); font-size: 1.3rem; margin-top: 30px; margin-bottom: 10px; text-transform: uppercase;}
+        .estilo-guion h4 { color: var(--mundo-secondary); font-size: 1.1rem; margin-top: 25px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .estilo-guion .variable {
+            font-weight: 700; color: var(--mundo-primary); background-color: var(--highlight-bg);
+            padding: 2px 6px; border-radius: 4px;
+        }
+        
+        .estilo-guion .plan-descripcion {
+            font-weight: 500; font-style: italic; color: var(--text-main); background-color: var(--bg-body);
+            padding: 16px; border-left: 3px solid var(--mundo-secondary); border-radius: 0 4px 4px 0; margin: 16px 0;
+            font-size: 1.05rem;
+        }
+        
+        .estilo-guion .bullet-list { margin-left: 0; padding-left: 20px; margin-bottom: 20px; }
+        .estilo-guion .bullet-item { margin-bottom: 10px; }
+        
+        .salvavidas-box {
+            background: var(--highlight-bg); border: 1px solid var(--mundo-primary); 
+            border-left: 5px solid var(--mundo-primary); padding: 20px; margin-top: 40px; border-radius: var(--radius-md);
+        }
+        .salvavidas-box h3 { color: var(--mundo-primary); margin-top: 0; }
+
+        .acciones-lectura { display: flex; gap: 16px; margin-top: 32px; }
+        .btn-secundario {
+            background: var(--bg-body); color: var(--text-main); border: 1px solid var(--border-color);
+            padding: 14px 24px; font-size: 1rem; font-weight: 600; border-radius: var(--radius-md);
+            cursor: pointer; flex: 1; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-secundario:hover { border-color: var(--text-muted); }
+        
+        .btn-copiar {
+            background: var(--success); color: #fff; border: none; padding: 14px 24px;
+            font-size: 1rem; font-weight: 600; border-radius: var(--radius-md); cursor: pointer; flex: 2;
+            display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s;
+        }
+        .btn-copiar:hover { opacity: 0.9; }
+
+        @media (max-width: 600px) { 
+            .card-lectura { padding: 30px 20px; } 
+            .acciones-lectura { flex-direction: column; }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <header>
+        <div class="logo-title">
+            <span style="font-size: 1.8rem;">🔵</span> Validador Mundo
+        </div>
+        <div class="header-controls">
+            <div class="stepper">
+                <div class="step active" id="step-1"><div class="step-num">1</div> Configurar</div>
+                <div class="step-divider"></div>
+                <div class="step" id="step-2"><div class="step-num">2</div> Teleprompter</div>
+            </div>
+            <button class="theme-btn" onclick="toggleTheme()" title="Cambiar tema">
+                <span id="theme-icon">🌙</span> <span id="theme-text">Oscuro</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <!-- VISTA 1: FORMULARIO -->
+        <div id="vista-formulario" class="view active">
+            <div class="card-form" id="main-form-card">
+                
+                <div class="master-switch-container">
+                    <h3>Escenario de Venta</h3>
+                    <div class="toggle-group">
+                        <input type="radio" id="escenario-bio" name="escenario_venta" value="biometria" checked onchange="toggleEscenario()">
+                        <label for="escenario-bio">Validación Biométrica</label>
+                        
+                        <input type="radio" id="escenario-grab" name="escenario_venta" value="grabacion" onchange="toggleEscenario()">
+                        <label for="escenario-grab">Contrato por Grabación</label>
+                    </div>
+                </div>
+                
+                <div class="grid-form" style="margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color);">
+                    <div class="span-full">
+                        <label>Nombre del Ejecutivo</label>
+                        <input type="text" id="in-ejecutivo" placeholder="Ej. Carlos Martínez">
+                    </div>
+                </div>
+
+                <div class="tabs-horizontales">
+                    <button class="tab-btn active" onclick="seleccionarServicio('hogar')">Servicios Hogar</button>
+                    <button class="tab-btn" onclick="seleccionarServicio('movil')">Servicios Móviles</button>
+                </div>
+
+                <!-- FORMULARIO HOGAR -->
+                <div id="form-hogar" class="tab-content active">
+                    <div class="grid-form">
+
+                        <div><label>Nombre del Cliente</label><input type="text" id="in-h-nombre" placeholder="Ej. Juan Pérez"></div>
+                        <div><label>RUT del Cliente</label><input type="text" id="in-h-rut" placeholder="12.345.678-9"></div>
+                        
+                        <div class="span-full">
+                            <label>Oferta Adquirida</label>
+                            <select id="in-h-oferta">
+                                <option value="">Seleccione el plan...</option>
+                                <optgroup label="1 Mundo">
+                                    <option value="1M 800M">1M 800M</option><option value="1M 1000M">1M 1000M</option>
+                                    <option value="1M 2000M">1M 2000M</option><option value="1M 3000M">1M 3000M</option>
+                                    <option value="1M 10GB">1M 10GB</option><option value="1M Mundo GO">1M Mundo GO</option>
+                                </optgroup>
+                                <optgroup label="2 Mundo">
+                                    <option value="2M 800 + GO">2M 800 + GO</option><option value="2M 1000 + GO">2M 1000 + GO</option>
+                                    <option value="2M 3GB + GO">2M 3GB + GO</option><option value="2M 10GB + GO">2M 10GB + GO</option>
+                                </optgroup>
+                                <optgroup label="3 Mundo">
+                                    <option value="3M 1000 + GO + FJ">3M 1000 + GO + FJ</option>
+                                    <option value="3M 3000 + GO + FJ">3M 3000 + GO + FJ</option>
+                                    <option value="3M 10GB + GO + FJ">3M 10GB + GO + FJ</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        
+                        <div class="span-2">
+                            <label>Características a Mencionar</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="chk-h-internet" checked> <span>Internet Fibra</span></label>
+                                <label><input type="checkbox" id="chk-h-tv"> <span>TV Mundo Go</span></label>
+                                <label><input type="checkbox" id="chk-h-fono" onchange="toggleFono()"> <span>Telefonía Fija</span></label>
+                            </div>
+                        </div>
+
+                        <!-- Detalles Telefonía Fija -->
+                        <div id="box-h-fono-detalles" class="span-full sub-caja" style="display: none;">
+                            <label>Tipo de Línea Fija</label>
+                            <div class="toggle-group" style="margin-bottom: 12px; width: max-content;">
+                                <input type="radio" id="h-fijo-nueva" name="tipo_h_linea_fija" value="nueva" checked onchange="toggleFonoPorta()">
+                                <label for="h-fijo-nueva" style="padding: 6px 16px;">Nueva</label>
+                                <input type="radio" id="h-fijo-porta" name="tipo_h_linea_fija" value="portabilidad" onchange="toggleFonoPorta()">
+                                <label for="h-fijo-porta" style="padding: 6px 16px;">Portabilidad</label>
+                            </div>
+
+                            <div id="box-h-fono-porta" style="display: none;">
+                                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label>Número a Portar (Fijo)</label>
+                                        <input type="text" id="in-h-num-portar" placeholder="Ej. 223456789">
+                                    </div>
+                                    <div style="flex: 1; min-width: 200px;">
+                                        <label>Compañía Donante</label>
+                                        <select id="in-h-compania">
+                                            <option value="[Compañía]">Seleccione...</option>
+                                            <option value="Entel">Entel</option><option value="Movistar">Movistar</option>
+                                            <option value="Claro">Claro</option><option value="VTR">VTR</option><option value="GTD">GTD / Telsur</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div><label>Dirección de Instalación</label><input type="text" id="in-h-direccion" placeholder="Ej. Calle Los Pinos 123"></div>
+                        <div><label>Fecha de Agenda</label><input type="date" id="in-h-fecha"></div>
+                        <div>
+                            <label>Franja Horaria</label>
+                            <select id="in-h-franja">
+                                <option value="[Franja]">Seleccionar...</option>
+                                <option value="AM (09:00 a 14:00 hrs)">AM (Mañana)</option>
+                                <option value="PM (14:00 a 19:00 hrs)">PM (Tarde)</option>
+                            </select>
+                        </div>
+                        <div class="span-2"><label>Productos Adicionales (Opcional)</label><input type="text" id="in-h-adicionales" placeholder="Ej. 1 Deco extra por $2.500"></div>
+
+                        <div><label>Correo Electrónico</label><input type="email" id="in-h-correo" placeholder="cliente@correo.cl"></div>
+                        <div><label>Celular Principal</label><input type="tel" id="in-h-num1" placeholder="9 1234 5678"></div>
+                        <div><label>Celular Secundario</label><input type="tel" id="in-h-num2" placeholder="Opcional"></div>
+                        <div>
+                            <label>Tipo de Cliente</label>
+                            <div class="toggle-group">
+                                <input type="radio" id="h-nuevo" name="tipo_h_cliente" value="nuevo" checked onchange="toggleCiclo('hogar')">
+                                <label for="h-nuevo">Nuevo</label>
+                                <input type="radio" id="h-actual" name="tipo_h_cliente" value="actual" onchange="toggleCiclo('hogar')">
+                                <label for="h-actual">Actual</label>
+                            </div>
+                        </div>
+                        <div id="box-h-ciclo" style="display: none;">
+                            <label>Ciclo Actual</label>
+                            <select id="in-h-ciclo">
+                                <option value="[Ciclo]">Seleccionar...</option>
+                                <option value="1">Ciclo 1</option><option value="5">Ciclo 5</option>
+                                <option value="10">Ciclo 10</option><option value="15">Ciclo 15</option>
+                                <option value="20">Ciclo 20</option><option value="25">Ciclo 25</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FORMULARIO MÓVIL -->
+                <div id="form-movil" class="tab-content">
+                    <div class="grid-form">
+
+                        <div><label>Nombre del Cliente</label><input type="text" id="in-m-nombre" placeholder="Ej. Ana Soto"></div>
+                        <div><label>RUT del Cliente</label><input type="text" id="in-m-rut" placeholder="19.876.543-2"></div>
+                        
+                        <!-- CONTENEDOR DINÁMICO DE LÍNEAS MÓVILES -->
+                        <div class="span-full">
+                            <label style="border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">📦 Líneas Móviles (Máx. 5)</label>
+                            <div id="contenedor-lineas-movil">
+                                <!-- Las líneas se inyectan acá vía JS -->
+                            </div>
+                            <button type="button" class="btn-linea" onclick="agregarLineaMovil()">➕ Agregar Otra Línea</button>
+                        </div>
+                        
+                        <div>
+                            <label>Método de Entrega (SIMs)</label>
+                            <div class="toggle-group">
+                                <input type="radio" id="m-entrega-dom" name="tipo_m_entrega" value="domicilio" checked onchange="toggleEntrega()">
+                                <label for="m-entrega-dom">Domicilio</label>
+                                <input type="radio" id="m-entrega-suc" name="tipo_m_entrega" value="sucursal" onchange="toggleEntrega()">
+                                <label for="m-entrega-suc">Sucursal</label>
+                            </div>
+                        </div>
+                        <div id="box-m-direccion"><label>Dirección Envío</label><input type="text" id="in-m-direccion" placeholder="Av. Providencia 1234"></div>
+                        <div id="box-m-sucursal" style="display: none;"><label>Opciones Sucursal</label>
+                            <input type="text" id="in-m-direccion-sucursal" placeholder="Dirección de la sucursal" style="margin-bottom: 10px;">
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="chk-m-prioritario"> <span>Retiro prioritario (hoy)</span></label>
+                            </div>
+                        </div>
+
+                        <div><label>Correo Electrónico</label><input type="email" id="in-m-correo" placeholder="cliente@correo.cl"></div>
+                        <div><label>Celular Contacto</label><input type="tel" id="in-m-num1" placeholder="9 1234 5678"></div>
+                        
+                        <div>
+                            <label>Tipo de Cliente</label>
+                            <div class="toggle-group">
+                                <input type="radio" id="m-cliente-nuevo" name="tipo_m_cliente" value="nuevo" checked onchange="toggleCiclo('movil')">
+                                <label for="m-cliente-nuevo">Nuevo</label>
+                                <input type="radio" id="m-cliente-actual" name="tipo_m_cliente" value="actual" onchange="toggleCiclo('movil')">
+                                <label for="m-cliente-actual">Actual</label>
+                            </div>
+                        </div>
+                        <div id="box-m-ciclo" style="display: none;">
+                            <label>Ciclo Actual</label>
+                            <select id="in-m-ciclo">
+                                <option value="[Ciclo]">Seleccionar...</option>
+                                <option value="1">1</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option>
+                            </select>
+                        </div>
+
+                        <div class="span-2">
+                            <label>🤝 Cliente Referido</label>
+                            <div class="toggle-group" style="width: max-content; margin-bottom: 10px;">
+                                <input type="radio" id="m-ref-no" name="es_referido" value="no" checked onchange="toggleReferido()">
+                                <label for="m-ref-no" style="padding: 6px 16px;">No</label>
+                                <input type="radio" id="m-ref-si" name="es_referido" value="si" onchange="toggleReferido()">
+                                <label for="m-ref-si" style="padding: 6px 16px;">Sí</label>
+                            </div>
+                            <div id="box-m-referido" style="display: none;">
+                                <input type="text" id="in-m-nombre-referido" placeholder="Nombre completo del cliente titular que refiere">
+                            </div>
+                        </div>
+
+                        <div class="span-2">
+                            <label>⚡ Lógica Activación</label>
+                            <div class="toggle-group" style="flex-direction: column;">
+                                <input type="radio" id="m-act-pre" name="tipo_m_activacion" value="prepago_postpago"><label for="m-act-pre">Prepago a Postpago (Requiere PIN)</label>
+                                <input type="radio" id="m-act-post" name="tipo_m_activacion" value="nueva_postpago" checked><label for="m-act-post">Línea Nueva / Postpago a Postpago</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-principal-generar" class="btn-accion-principal" onclick="generarTextoFinal()">
+                    <span>✨</span> Generar Resumen (Biometría)
+                </button>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             VISTA 2: RESULTADO DE LECTURA
+             ========================================== -->
+        <div id="vista-lectura" class="view">
+            <div class="lectura-wrapper" id="wrapper-resultado">
+                <div class="card-lectura estilo-guion" id="contenedor-texto">
+                    <!-- El texto se inyecta aquí -->
+                </div>
+                
+                <div class="acciones-lectura">
+                    <button class="btn-secundario" onclick="volverEdicion()"><span>✏️</span> Volver a Editar</button>
+                    <button class="btn-copiar" id="btn-accion-resultado" onclick="copiarAlPortapapeles()"><span>📋</span> Copiar Texto</button>
+                </div>
+            </div>
+        </div>
+
+    </div> 
+
+    <script>
+        let servicioActual = 'hogar';
+        let idLineaMovil = 0;
+
+        // Diccionario estructurado para móviles para poder sumar y describir
+        const datosPlanesMovil = {
+            "PLAN MÓVIL S": { desc: "Navegación 100GB, 1000 MINUTOS, 100SMS Y RRSS que NO consumen datos (WhatsApp, Instagram, Facebook, Messenger, X).", normal: 8990, promo: 5490, duracion: "12 meses" },
+            "PLAN MÓVIL M": { desc: "Navegación 300GB, MINUTOS LIBRES, 100SMS Y RRSS que NO consumen datos (Spotify, WhatsApp, Instagram, Facebook, Messenger, X).", normal: 10490, promo: 5990, duracion: "12 meses" },
+            "PLAN MÓVIL L": { desc: "Navegación 500GB, MINUTOS LIBRES, 100SMS Y RRSS que NO consumen datos (Spotify, WhatsApp, Instagram, Facebook, Messenger, X).", normal: 13490, promo: 7990, duracion: "12 meses" },
+            "PLAN MÓVIL XL": { desc: "Navegación LIBRE, MINUTOS LIBRES, 1000 SMS Y RRSS que NO consumen datos (Spotify, WhatsApp, Instagram, Facebook, Messenger, X).", normal: 13990, promo: 8394, duracion: "6 meses" },
+            "PLAN MÓVIL S CARTERA": { desc: "Navegación 50GB, 1000 MINUTOS, 100SMS Y RRSS que NO consumen datos (WhatsApp, Instagram, Facebook, Messenger, X).", normal: 4990, promo: 4990, duracion: "permanente" },
+            "PLAN MÓVIL M CARTERA": { desc: "Navegación 150GB, MINUTOS LIBRES, 100SMS Y RRSS que NO consumen datos (WhatsApp, Instagram, Facebook, Messenger, X).", normal: 5990, promo: 5990, duracion: "permanente" },
+            "PLAN MÓVIL XL CARTERA": { desc: "Navegación LIBRE, MINUTOS LIBRES, 1000 SMS Y RRSS que NO consumen datos (Spotify, WhatsApp, Instagram, Facebook, Messenger, X).", normal: 13490, promo: 5500, duracion: "12 meses" },
+            "PLAN MÓVIL SENIOR": { desc: "Navegación 50GB, 1000 MINUTOS, 100SMS Y RRSS que NO consumen datos (WhatsApp, Instagram, Facebook, Messenger, X).", normal: 3990, promo: 3990, duracion: "permanente" }
+        };
+
+        const textosPlanesHogar = {
+            "1M 800M": "Valor promocional de 15.990 por 12 meses y valor fijo de 21.990 desde el mes 13. Internet fibra simétrica con velocidad máxima de 800 Mbps.",
+            "1M 1000M": "Valor promocional de 15.990 por 12 meses y valor fijo de 21.990 desde el mes 13. Internet fibra simétrica con velocidad máxima de 1 Gbps.",
+            "1M 2000M": "Valor promocional de 16.990 por 12 meses y valor fijo de 22.990 desde el mes 13. Internet fibra asimétrica de 2 Gbps bajada / 1 Gbps subida.",
+            "1M 3000M": "Valor promocional de 19.990 por 12 meses y valor fijo de 26.990 desde el mes 13. Internet fibra asimétrica de 3 Gbps bajada / 1.5 Gbps subida.",
+            "1M 10GB": "Valor promocional de 30.990 por 12 meses y valor fijo de 63.500 desde el mes 13. Internet fibra 10 Gbps bajada / 5 Gbps subida.",
+            "1M Mundo GO": "Valor fijo de $26.990/mes. Servicio de televisión Smart Mundo GO para 4 dispositivos simultáneo, más de 180 canales.",
+            "2M 800 + GO": "Valor promocional de 25.990 por 12 meses y valor fijo de 36.150 desde el mes 13. Internet fibra simétrica 800 Mbps y TV Mundo GO!.",
+            "2M 1000 + GO": "Valor promocional de 28.990 por 12 meses y valor fijo de 46.150 desde el mes 13. Internet fibra asimétrica de 2 Gbps descarga / 1 Gbps subida y TV Mundo GO!.",
+            "2M 3GB + GO": "Valor promocional de 38.990 por 12 meses y valor fijo de 52.800 desde el mes 13. Internet fibra 3 Gbps bajada / 1.5 Gbps subida, junto a TV Mundo GO!.",
+            "2M 10GB + GO": "Valor promocional de 69.290 por 12 meses y valor fijo de 94.800 desde el mes 13. Internet fibra 10 Gbps bajada / 5 Gbps subida y TV Mundo GO!.",
+            "3M 1000 + GO + FJ": "Valor fijo de $59.000/mes. Internet fibra simétrica 1 Gbps, TV Mundo GO! y Telefonía Fija ilimitada.",
+            "3M 3000 + GO + FJ": "Valor fijo de $69.500/mes. Internet fibra 3 Gbps bajada / 1.5 Gbps subida, TV Mundo GO! y Telefonía Fija ilimitada.",
+            "3M 10GB + GO + FJ": "Valor fijo de $111.500/mes. Internet fibra 10 Gbps bajada / 5 Gbps subida, TV Mundo GO! y Telefonía Fija ilimitada."
+        };
+
+        // Inicializar la primera línea móvil al cargar
+        document.addEventListener("DOMContentLoaded", () => {
+            agregarLineaMovil();
+        });
+
+        function agregarLineaMovil() {
+            const container = document.getElementById('contenedor-lineas-movil');
+            if (container.children.length >= 5) {
+                alert("Máximo 5 líneas móviles por contrato.");
+                return;
+            }
+            idLineaMovil++;
+            const id = idLineaMovil;
+            const numLineaVisual = container.children.length + 1;
+            
+            const html = `
+                <div id="linea-movil-${id}" class="sub-caja" style="margin-bottom: 16px; border-left: 4px solid var(--mundo-secondary);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="margin: 0; color: var(--mundo-primary); font-size: 1rem;">📱 Línea #${numLineaVisual}</h4>
+                        ${numLineaVisual > 1 ? `<button type="button" onclick="eliminarLineaMovil(${id})" style="background:var(--mundo-red); color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.8rem;">❌ Quitar</button>` : ''}
+                    </div>
+                    <div class="grid-form" style="gap:12px;">
+                        <div class="span-full">
+                            <select id="in-m-oferta-${id}" style="font-weight:600; color:var(--mundo-primary);">
+                                <option value="">Seleccione el plan de esta línea...</option>
+                                <optgroup label="Líneas Nuevas y Portabilidad">
+                                    <option value="PLAN MÓVIL S">PLAN MÓVIL S (100GB)</option>
+                                    <option value="PLAN MÓVIL M">PLAN MÓVIL M (300GB)</option>
+                                    <option value="PLAN MÓVIL L">PLAN MÓVIL L (500GB)</option>
+                                    <option value="PLAN MÓVIL XL">PLAN MÓVIL XL (Libre)</option>
+                                    <option value="PLAN MÓVIL SENIOR">PLAN MÓVIL SENIOR</option>
+                                </optgroup>
+                                <optgroup label="Planes Cartera">
+                                    <option value="PLAN MÓVIL S CARTERA">PLAN MÓVIL S CARTERA</option>
+                                    <option value="PLAN MÓVIL M CARTERA">PLAN MÓVIL M CARTERA</option>
+                                    <option value="PLAN MÓVIL XL CARTERA">PLAN MÓVIL XL CARTERA</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div>
+                            <div class="toggle-group" style="padding: 2px;">
+                                <input type="radio" id="m-linea-nueva-${id}" name="tipo_m_linea_${id}" value="nueva" checked onchange="togglePortaLinea(${id})">
+                                <label for="m-linea-nueva-${id}">Línea Nueva</label>
+                                <input type="radio" id="m-linea-porta-${id}" name="tipo_m_linea_${id}" value="portabilidad" onchange="togglePortaLinea(${id})">
+                                <label for="m-linea-porta-${id}">Portabilidad</label>
+                            </div>
+                        </div>
+                        <div class="span-2" id="box-m-porta-${id}" style="display:none;">
+                            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                                <div style="flex:1; min-width: 150px;"><input type="tel" id="in-m-num-porta-${id}" placeholder="Número a portar"></div>
+                                <div style="flex:1; min-width: 150px;">
+                                    <select id="in-m-compania-${id}">
+                                        <option value="">Cía Donante...</option>
+                                        <option value="Entel">Entel</option><option value="Movistar">Movistar</option>
+                                        <option value="Claro">Claro</option><option value="WOM">WOM</option>
+                                        <option value="VTR">VTR</option><option value="Virgin Mobile">Virgin Mobile</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            actualizarNumeracionLineas();
+        }
+
+        function eliminarLineaMovil(id) {
+            document.getElementById(`linea-movil-${id}`).remove();
+            actualizarNumeracionLineas();
+        }
+
+        function actualizarNumeracionLineas() {
+            const titulos = document.querySelectorAll('#contenedor-lineas-movil h4');
+            titulos.forEach((h4, index) => {
+                h4.innerText = `📱 Línea #${index + 1}`;
+            });
+        }
+
+        function togglePortaLinea(id) {
+            const isPorta = document.getElementById(`m-linea-porta-${id}`).checked;
+            document.getElementById(`box-m-porta-${id}`).style.display = isPorta ? 'block' : 'none';
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+        function formatoMoneda(valor) {
+            return Number(valor).toLocaleString('es-CL');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            if (body.getAttribute('data-theme') === 'light') {
+                body.setAttribute('data-theme', 'dark');
+                document.getElementById('theme-icon').innerText = '☀️';
+                document.getElementById('theme-text').innerText = 'Claro';
+            } else {
+                body.setAttribute('data-theme', 'light');
+                document.getElementById('theme-icon').innerText = '🌙';
+                document.getElementById('theme-text').innerText = 'Oscuro';
+            }
+        }
+
+        function seleccionarServicio(servicio) {
+            servicioActual = servicio;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('form-' + servicio).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function toggleEscenario() {
+            const esGrabacion = document.getElementById('escenario-grab').checked;
+            const mainCard = document.getElementById('main-form-card');
+            const btnPrincipal = document.getElementById('btn-principal-generar');
+            
+            if(esGrabacion) {
+                document.body.classList.add('modo-grabacion');
+                mainCard.classList.add('modo-grabacion');
+                if(btnPrincipal) btnPrincipal.innerHTML = "<span>🎙️</span> Generar Contrato (Grabación)";
+            } else {
+                document.body.classList.remove('modo-grabacion');
+                mainCard.classList.remove('modo-grabacion');
+                if(btnPrincipal) btnPrincipal.innerHTML = "<span>✨</span> Generar Resumen (Biometría)";
+            }
+        }
+
+        function toggleCiclo(tipo) {
+            const el = document.querySelector(`input[name="tipo_${tipo.charAt(0)}_cliente"]:checked`);
+            document.getElementById(`box-${tipo.charAt(0)}-ciclo`).style.display = (el && el.value === 'actual') ? 'block' : 'none';
+        }
+        function toggleFono() {
+            const chkFono = document.getElementById('chk-h-fono');
+            const boxFono = document.getElementById('box-h-fono-detalles');
+            if (boxFono) boxFono.style.display = (chkFono && chkFono.checked) ? 'block' : 'none';
+        }
+        function toggleFonoPorta() {
+            const isPorta = document.getElementById('h-fijo-porta')?.checked;
+            const box = document.getElementById('box-h-fono-porta');
+            if (box) box.style.display = isPorta ? 'block' : 'none';
+        }
+        function toggleEntrega() {
+            const esDomicilio = document.getElementById('m-entrega-dom')?.checked;
+            document.getElementById('box-m-direccion').style.display = esDomicilio ? 'block' : 'none';
+            document.getElementById('box-m-sucursal').style.display = esDomicilio ? 'none' : 'block';
+        }
+        function toggleReferido() {
+            const esSi = document.getElementById('m-ref-si')?.checked;
+            document.getElementById('box-m-referido').style.display = esSi ? 'block' : 'none';
+        }
+
+        function formatearFecha(fechaInput) {
+            if (!fechaInput) return "[fecha]";
+            return new Date(fechaInput + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // ==========================================
+        // MOTOR DE LECTURA 
+        // ==========================================
+        function generarTextoFinal() {
+            const contenedor = document.getElementById('contenedor-texto');
+            const esGrabacion = document.getElementById('escenario-grab').checked;
+            const ejecutivo = escapeHTML(document.getElementById('in-ejecutivo')?.value) || '[NOMBRE DEL EJECUTIVO]';
+            let htmlGenerado = "";
+
+            if (servicioActual === 'hogar') {
+                const nombre = escapeHTML(document.getElementById(`in-h-nombre`)?.value) || '[NOMBRE CLIENTE]';
+                const rut = escapeHTML(document.getElementById(`in-h-rut`)?.value) || '[RUT]';
+                const correo = escapeHTML(document.getElementById(`in-h-correo`)?.value) || '[CORREO]';
+                const num1 = escapeHTML(document.getElementById(`in-h-num1`)?.value) || '[TELÉFONO]';
+                const num2 = escapeHTML(document.getElementById(`in-h-num2`)?.value);
+                const txtNum2 = num2 ? ` y <span class="variable">${num2}</span>` : '';
+                const direccion = escapeHTML(document.getElementById(`in-h-direccion`)?.value) || '[DIRECCIÓN]';
+                
+                const ofertaClave = document.getElementById(`in-h-oferta`)?.value;
+                const nombreOferta = ofertaClave || '[PLAN]';
+                const descripcionOferta = textosPlanesHogar[ofertaClave] || '[DESCRIPCIÓN DEL PLAN]';
+
+                const tipoClienteEl = document.querySelector(`input[name="tipo_h_cliente"]:checked`);
+                const tipoCliente = tipoClienteEl ? tipoClienteEl.value : 'nuevo';
+                const ciclo = document.getElementById(`in-h-ciclo`)?.value || '[CICLO]';
+                const adicionales = escapeHTML(document.getElementById('in-h-adicionales')?.value);
+                const fecha = formatearFecha(document.getElementById('in-h-fecha')?.value);
+                const franja = document.getElementById('in-h-franja')?.value || '[Franja]';
+                
+                const tieneInternet = document.getElementById('chk-h-internet')?.checked;
+                const tieneTv = document.getElementById('chk-h-tv')?.checked;
+                const tieneFono = document.getElementById('chk-h-fono')?.checked;
+
+                const tipoLineaFija = document.querySelector('input[name="tipo_h_linea_fija"]:checked')?.value || 'nueva';
+                const numeroPortarFijo = escapeHTML(document.getElementById('in-h-num-portar')?.value) || '[Número a portar]';
+                const companiaFija = document.getElementById('in-h-compania')?.value || '[Compañía donante]';
+
+                let serviciosAcordados = [];
+                if(tieneInternet) serviciosAcordados.push("internet");
+                if(tieneTv) serviciosAcordados.push("televisión");
+                if(tieneFono) serviciosAcordados.push("telefonía fija");
+                const strServicios = serviciosAcordados.join(", ").replace(/, ([^,]*)$/, ' y $1') || '[servicios acordados]';
+
+                if (esGrabacion) {
+                    htmlGenerado = `
+                        <h3>CONTRATO MANUAL HOGAR</h3>
+                        <h4>1. Presentación</h4>
+                        <p>Señor/a <span class="variable">${nombre}</span>, soy <span class="variable">${ejecutivo}</span>, ejecutivo de Mundo. Le compartiré ahora un resumen con los puntos clave de lo que acaba de contratar.</p>
+
+                        <h4>2. Plan Contratado</h4>
+                        <p>Usted está contratando el plan <span class="variable">${nombreOferta}</span> para la dirección; <span class="variable">${direccion}</span>.</p>
+                        
+                        <div class="plan-descripcion">
+                            ${descripcionOferta}
+                        </div>
+
+                        ${adicionales ? `<p>Incluye cómo adicional <span class="variable">${adicionales}</span></p>` : ''}
+                        <p>Este plan incluye <span class="variable">${strServicios}</span> (según lo acordado).</p>
+
+                        <ul class="bullet-list">
+                        ${tieneInternet ? `<li class="bullet-item"><strong>INET:</strong> Para medir la velocidad de su Internet, debe realizarla mediante conexión de cable directo al módem, ya que las mediciones por WIFI se encuentran distorsionadas por agentes externos. La dirección de IP que se entrega es dinámica.</li>` : ''}
+                        ${tieneTv ? `<li class="bullet-item"><strong>TV:</strong> La Grilla de más de 180 Canales disponibles para su comuna está en nuestra página web www.tumundo.cl. De existir algún cambio en la misma, usted será informado mediante correo electrónico con al menos 20 días de anticipación.</li>` : ''}
+                        ${tieneFono ? `<li class="bullet-item"><strong>VOIP - Telefonía Fija:</strong> Si usted solicita un número nuevo, este será informado en la visita técnica.<br>
+                        ${tipoLineaFija === 'portabilidad' ? `<br><em>(Si solicita portabilidad)</em>, ¿autoriza usted mediante esta grabación a Pacífico Cable SPA a solicitar al OAP toda información necesaria para activar el proceso? Necesito que me indique su número telefónico actual <span class="variable">${numeroPortarFijo}</span>, la compañía donante <span class="variable">${companiaFija}</span>, su RUT y su nombre completo.` : ''}</li>` : ''}
+                        </ul>
+
+                        ${tieneFono ? `<p>Le informo que las llamadas a números internacionales y líneas 700 están bloqueadas, aunque usted puede realizarlas sin costo usando plataformas como Skype, WhatsApp, ZOOM o Meet. En caso de corte de luz o suspensión por no pago, el servicio telefónico quedará inhabilitado.</p>` : ''}
+
+                        <h4>3. Canales de Atención</h4>
+                        <p>Para cualquier consulta puede llamarnos al 600 9100 100, escribirnos en nuestras redes sociales @mundoasiste o visitar una sucursal (listado en www.tumundo.cl).</p>
+
+                        <h4>4. Facturación y Medios de Pago</h4>
+                        ${tipoCliente === 'nuevo' ?
+                        `<p><strong>Cliente nuevo:</strong> En Mundo, nuestros servicios tienen el cobro por mes adelantado con seis ciclos de facturación distintos con fecha de inicio 1, 5, 10, 15, 20 y 25 de cada mes. La primera boleta se emitirá en el ciclo más cercano a la activación de los servicios, con 20 días continuos de plazo para pagar. Si no se paga 5 días después, el servicio se suspende y la reposición cuesta $2.500.</p>
+                        <p>El pago se realiza con su RUT en plataformas no presenciales, tumundo.cl, BancoEstado.cl, Mach, Webpay, Sencillito, y/u otros comercios asociados, como de manera presencial en sucursales físicas Mundo, caja vecina, multicaja u otros comercios adheridos información que puede encontrar en nuestra página web.</p>`
+                        :
+                        `<p><strong>Cliente actual:</strong> Nuestros servicios se facturan por mes adelantado y se acoplan a su actual ciclo de facturación <strong>(Ciclo <span class="variable">${ciclo}</span>)</strong>. Puede aplicarse un cobro proporcional el día de la activación si corresponde.</p>
+                        <p>El pago se realiza con su RUT en plataforma no presenciales, tumundo.cl, BancoEstado.cl, Mach, Webpay, Sencillito, y/u otros comercios asociados, como de manera presencial en sucursales físicas Mundo, caja vecina, multicaja u otros comercios adheridos información que puede encontrar en nuestra página web.</p>`
+                        }
+
+                        <h4>5. Visitas Técnicas</h4>
+                        <p>Las visitas son gratuitas si la falla es responsabilidad de Mundo. Si es por causas externas, el costo es de $20.000.</p>
+
+                        <h4>6. Instalación y Condiciones del Contrato</h4>
+                        <p>La instalación no tiene costo. Los equipos se entregan en comodato y deben devolverse si se da de baja el servicio. En caso de no devolverse los equipos, Mundo enviará personal autorizado a su domicilio para el retiro de estos, si la devolución no se concreta se realizará el cobro correspondiente. El contrato entra en vigor hoy, se renueva automáticamente cada año y la tarifa se reajusta en marzo, según el IPC. El contrato y sus boletas se enviarán al correo <span class="variable">${correo}</span>.</p>
+                        <p>Usted puede retractarse de este contrato sin costo alguno, siempre que no se haya hecho efectiva la instalación.</p>
+
+                        <h4>7. Agendamiento de Instalación</h4>
+                        <p>La instalación queda para el día <span class="variable">${fecha}</span>, entre <span class="variable">${franja}</span> horas y se encuentra sujeta a factibilidad técnica en terreno.</p>
+
+                        <h4>8. Confirmación contratación cliente</h4>
+                        <p>Sr/Sra para confirmar la contratación del servicio, Necesito que me indique con su voz:</p>
+                        <p>Nombre Completo, RUT, dirección de instalación, fono de contacto, correo electrónico${tieneFono && tipoLineaFija === 'portabilidad' ? `, Portabilidad (confirmar el número a portar <span class="variable">${numeroPortarFijo}</span>, compañía donante <span class="variable">${companiaFija}</span>)` : ''}.</p>
+
+                        <div class="salvavidas-box">
+                            <h3>🚨 Salvavidas Móvil</h3>
+                            <p>Mundo quiere que ahorre en su boleta móvil. Hoy le entregamos la posibilidad de llevar un plan con minutos libres y Spotify que no consume datos por tan solo $5.990. ¿Le interesa?</p>
+                        </div>
+
+                        <div class="salvavidas-box" style="border-left-color: var(--success); background-color: var(--success-bg); border-color: var(--success);">
+                            <p style="margin:0; text-align:center;">Agradezco su tiempo en línea y le doy la cordial bienvenida a Mundo</p>
+                            <h3 style="color: var(--success); text-align: center; margin-top: 10px;">¡TU MUNDO TIENES QUE VIVIRLO!</h3>
+                        </div>
+                    `;
+                } else {
+                    let serviciosTexto = '';
+                    if (document.getElementById('chk-h-internet')?.checked || document.getElementById('chk-h-tv')?.checked || document.getElementById('chk-h-fono')?.checked) {
+                        serviciosTexto = '<ul class="bullet-list">';
+                        if(document.getElementById('chk-h-internet')?.checked) serviciosTexto += '<li class="bullet-item"><strong>Internet:</strong> Tecnología de Fibra Óptica compatible con Wifi 6 para conexión entre 10 a 16 dispositivos según oferta con medición exacta por cable de red.</li>';
+                        if(document.getElementById('chk-h-tv')?.checked) serviciosTexto += '<li class="bullet-item"><strong>Televisión Mundo Go:</strong> Más de 180 canales en HD, incluye decodificador que convierte la TV en Smart TV, capacidad para 4 dispositivos en simultáneo.</li>';
+                        if(document.getElementById('chk-h-fono')?.checked) serviciosTexto += '<li class="bullet-item"><strong>Telefonía fija:</strong> Llamadas ilimitadas a móviles y fijos. Puede ser tanto en número nuevo o portabilidad.</li>';
+                        serviciosTexto += '</ul>';
+                    }
+
+                    let facturacionTexto = tipoCliente === 'nuevo' ?
+                        `<p>Nuestro cobro es por mes adelantado y contamos con 6 ciclos de facturación 1, 5, 10, 15, 20 y 25. La primera boleta se genera el día del ciclo asignado más cercano a su fecha de instalación. Cuenta con 20 dias para el pago de su boleta y tendrá métodos de pago cómo nuestra sucursal virtual Mundo, Webpay, BancoEstado, Sencillito, Multicaja, entre otros, usando el RUT del titular.</p>` :
+                        `<p>El servicio nuevo se acopla al mismo ciclo de facturación actual <strong>(Ciclo <span class="variable">${ciclo}</span>)</strong> y recuerde que se puede generar un cobro proporcional desde su fecha de activación a su ciclo asignado solo si corresponde. Cuenta con 20 dias para el pago de su boleta y tendrá métodos de pago cómo nuestra sucursal virtual Mundo, Webpay, BancoEstado, Sencillito, Multicaja, entre otros, usando el RUT del titular.</p>`;
+
+                    htmlGenerado = `
+                        <p>Señor/a <span class="variable">${nombre}</span>, identificado con RUT <span class="variable">${rut}</span>, Le recuerdo la oferta anteriormente contratada.</p>
+                        <p>Usted adquiere el plan <span class="variable">${nombreOferta}</span>, el cual incluye:</p>
+                        
+                        <div class="plan-descripcion">
+                            ${descripcionOferta}
+                        </div>
+                        
+                        ${serviciosTexto}
+                        
+                        ${adicionales ? `<p>Adicionalmente: <span class="variable">${adicionales}</span>.</p>` : ''}
+                        
+                        <p>Le recuerdo que la instalación no tiene costo y nuestros equipos se entregan en comodato y deben devolverse si se da de baja el servicio. En caso de no devolver los equipos, Mundo enviará personal autorizado a su domicilio para el retiro de estos, si la devolución no se concreta se realizará el cobro correspondiente.</p>
+                        <p>Su fecha de agenda es <span class="variable">${fecha}</span> en una franja <span class="variable">${franja}</span> El día antes a la instalación recibirá un mensaje vía WhatsApp para confirmar la visita técnica, es importante confirme para dar progreso a su instalación.</p>
+                        <p>Su correo electrónico registrado es <span class="variable">${correo}</span>, y sus números de contacto son; <span class="variable">${num1}</span>${txtNum2}. ¿Correcto?</p>
+                        <p><strong>Para el tema de facturación:</strong></p>
+                        ${facturacionTexto}
+
+                        <div class="salvavidas-box">
+                            <h3>🚨 Salvavidas Móvil</h3>
+                            <p>Aprovecho para comentarle que Mundo quiere que ahorre en su boleta móvil y el día de hoy le entrega la posibilidad de llevar un plan con minutos libres y Spotify que no consume de sus datos por tan solo $5.990 ¿le interesa escuchar la oferta?</p>
+                            <p style="font-size:0.9rem; margin-bottom:0; color: var(--text-muted);"><em>(SI: entregar oferta y cierre / NO: Recuerde que tiene las puertas abiertas para que disfrute de una excelente cobertura. Dar cierre de llamada).</em></p>
+                        </div>
+                    `;
+                }
+            } 
+            
+            // ==============================================================
+            // SERVICIOS MÓVILES (CON RECOPILACIÓN DE LÍNEAS DINÁMICAS)
+            // ==============================================================
+            else if (servicioActual === 'movil') {
+                const nombre = escapeHTML(document.getElementById(`in-m-nombre`)?.value) || '[NOMBRE CLIENTE]';
+                const rut = escapeHTML(document.getElementById(`in-m-rut`)?.value) || '[RUT]';
+                const correo = escapeHTML(document.getElementById(`in-m-correo`)?.value) || '[CORREO]';
+                const num1 = escapeHTML(document.getElementById(`in-m-num1`)?.value) || '[TELÉFONO]';
+                const num2 = escapeHTML(document.getElementById(`in-m-num2`)?.value);
+                const txtNum2 = num2 ? ` y <span class="variable">${num2}</span>` : '';
+                const entrega = document.querySelector('input[name="tipo_m_entrega"]:checked')?.value || 'domicilio';
+                const direccion = escapeHTML(document.getElementById('in-m-direccion')?.value) || '[DIRECCIÓN]';
+                const dirSucursal = escapeHTML(document.getElementById('in-m-direccion-sucursal')?.value) || '[DIRECCIÓN SUCURSAL]';
+                const tipoClienteEl = document.querySelector(`input[name="tipo_m_cliente"]:checked`);
+                const tipoCliente = tipoClienteEl ? tipoClienteEl.value : 'nuevo';
+                const ciclo = document.getElementById(`in-m-ciclo`)?.value || '[CICLO]';
+                const tipoAct = document.querySelector('input[name="tipo_m_activacion"]:checked')?.value || 'nueva_postpago';
+                
+                const refActivado = document.querySelector('input[name="es_referido"]:checked')?.value === 'si';
+                const referidoPor = escapeHTML(document.getElementById('in-m-nombre-referido')?.value) || '[NOMBRE TITULAR]';
+
+                // RECOPILAR LÍNEAS
+                let lineasVendidas = [];
+                let totalPromo = 0;
+                let hayPortabilidad = false;
+
+                const lineasDivs = document.querySelectorAll('#contenedor-lineas-movil .sub-caja');
+                lineasDivs.forEach((div) => {
+                    const idStr = div.id.replace('linea-movil-', '');
+                    const planSeleccionado = document.getElementById(`in-m-oferta-${idStr}`).value;
+                    if(planSeleccionado) {
+                        const tipoL = document.querySelector(`input[name="tipo_m_linea_${idStr}"]:checked`)?.value || 'nueva';
+                        const numP = escapeHTML(document.getElementById(`in-m-num-porta-${idStr}`)?.value) || '[NÚMERO A PORTAR]';
+                        const compP = document.getElementById(`in-m-compania-${idStr}`)?.value || '[COMPAÑÍA]';
+                        
+                        const objPlan = datosPlanesMovil[planSeleccionado];
+                        if(objPlan) {
+                            totalPromo += objPlan.promo;
+                            if(tipoL === 'portabilidad') hayPortabilidad = true;
+                            
+                            lineasVendidas.push({
+                                plan: planSeleccionado,
+                                tipo: tipoL,
+                                numero: numP,
+                                compania: compP,
+                                datos: objPlan
+                            });
+                        }
+                    }
+                });
+
+                if (lineasVendidas.length === 0) {
+                    alert("Debes seleccionar al menos un plan móvil en las líneas agregadas.");
+                    return;
+                }
+
+                if (esGrabacion) {
+                    // CONTRATO GRABACIÓN MÓVIL
+                    let listadoLineasHTML = "";
+                    let firmaVozLineasHTML = "";
+
+                    lineasVendidas.forEach((l, i) => {
+                        listadoLineasHTML += `
+                            <div class="plan-descripcion" style="margin-bottom:10px; margin-top:5px;">
+                                <strong>Línea ${i+1}: <span class="variable">${l.plan}</span></strong><br>
+                                ${l.datos.desc}
+                            </div>
+                        `;
+
+                        if (l.tipo === 'portabilidad') {
+                            firmaVozLineasHTML += `<li class="bullet-item">● <strong>Con portabilidad:</strong> Sr./Sra. <span class="variable">${nombre}</span>, confirmamos el plan <span class="variable">${l.plan}</span>, con valor normal de $${formatoMoneda(l.datos.normal)} y promoción de <span class="variable">$${formatoMoneda(l.datos.promo)}</span> por <span class="variable">${l.datos.duracion}</span>, y portabilidad del número <span class="variable">${l.numero}</span> desde la compañía <span class="variable">${l.compania}</span>.</li>`;
+                        } else {
+                            firmaVozLineasHTML += `<li class="bullet-item">● <strong>Sin portabilidad:</strong> Sr./Sra. <span class="variable">${nombre}</span>, confirmamos el plan <span class="variable">${l.plan}</span>, con valor normal de $${formatoMoneda(l.datos.normal)} y promoción de <span class="variable">$${formatoMoneda(l.datos.promo)}</span> por <span class="variable">${l.datos.duracion}</span>.</li>`;
+                        }
+                    });
+
+                    htmlGenerado = `
+                        <h3>CONTRATO MANUAL MÓVIL</h3>
+                        
+                        <h4>1. Cierre de contrato</h4>
+                        <p>Señor/a <span class="variable">${nombre}</span>, soy <span class="variable">${ejecutivo}</span>, ejecutivo de Mundo. Le compartiré ahora un resumen con los puntos clave de lo que acaba de contratar.</p>
+
+                        <h4>2. Confirmación del Plan y Entrega de la SIM</h4>
+                        <p>Usted está contratando <strong>${lineasVendidas.length}</strong> línea(s) móvil(es):</p>
+                        ${listadoLineasHTML}
+                        <p style="background:var(--highlight-bg); padding:10px; border-radius:4px; font-weight:600; color:var(--mundo-primary); text-align:center;">
+                            El valor total promocional por sus líneas será de $${formatoMoneda(totalPromo)} mensuales.
+                        </p>
+
+                        <h4>3. La tarjeta SIM será enviada/retirada</h4>
+                        ${entrega === 'sucursal' ? 
+                            `<p><strong>Sucursal:</strong> En la sucursal seleccionada por usted (<span class="variable">${dirSucursal}</span>). El retiro y activación de su Sim Card puede realizarlo a partir del día hábil siguiente (24 horas).</p>` 
+                        : 
+                            `<p><strong>Domicilio:</strong> Enviada a su dirección (<span class="variable">${direccion}</span>), en un plazo de 2 a 5 días hábiles, una vez recibida debe activarla siguiendo las indicaciones entregadas junto con su Sim Card. Si tiene dudas o consultas puede realizarlas al 6009100100 o al 442160800 opción móvil. (Activación Opción 5).</p>`
+                        }
+
+                        <h4>4. Condiciones Generales del Servicio</h4>
+                        <p>El plan es de cuenta controlada: si se terminan los gigas o minutos, el servicio se suspende hasta el siguiente ciclo, salvo que compre una bolsa adicional. El contrato entra en vigencia hoy, se renueva automáticamente cada año y la tarifa se reajusta en marzo, según el IPC. Usted puede retractarse de este contrato sin costo alguno, siempre que no se haya hecho efectiva la activación.</p>
+                        
+                        ${hayPortabilidad ? `
+                        <p>● <strong>Portabilidad (si aplica):</strong> ¿autoriza usted mediante esta grabación a Pacífico Cable SPA a solicitar al OAP toda información necesaria para activar el proceso? Necesito que me indique su número telefónico actual, la compañía donante, su RUT y su nombre completo.</p>
+                        <p>● La portabilidad solo aplica al número telefónico. Su compañía actual podría cobrar por servicios pendientes. El cambio se realiza entre 03:00 y 05:00 AM, con posible breve interrupción. El retracto puede realizarlo hasta las 20:00 horas del día en que se active el servicio.</p>
+                        ` : ''}
+
+                        <h4>5. Facturación y Medios de Pago</h4>
+                        ${tipoCliente === 'nuevo' ?
+                        `<p><strong>Cliente nuevo:</strong> En Mundo, nuestros servicios tienen el cobro por mes adelantado con seis ciclos de facturación distintos con fecha de inicio 1, 5, 10, 15, 20 y 25 de cada mes. La primera boleta se emitirá en el ciclo más cercano a la activación de los servicios, con 20 días continuos de plazo para pagar. Si no se paga 5 días después, el servicio se suspende y la reposición cuesta $2.500.</p>
+                        <p>El pago se realiza con su RUT en plataformas no presenciales, tumundo.cl, BancoEstado.cl, Mach, Webpay, Sencillito, y/u otros comercios asociados, como de manera presencial en sucursales físicas Mundo, caja vecina, multicaja u otros comercios adheridos información que puede encontrar en nuestra página web.</p>`
+                        :
+                        `<p><strong>Cliente actual:</strong> Nuestros servicios se facturan por mes adelantado y se acoplan a su actual ciclo de facturación <strong>(Ciclo <span class="variable">${ciclo}</span>)</strong>. Puede aplicarse un cobro proporcional el día de la activación si corresponde.</p>
+                        <p>El pago se realiza con su RUT en plataforma no presenciales, tumundo.cl, BancoEstado.cl, Mach, Webpay, Sencillito, y/u otros comercios asociados, como de manera presencial en sucursales físicas Mundo, caja vecina, multicaja u otros comercios adheridos información que puede encontrar en nuestra página web.</p>`
+                        }
+
+                        <h4>6. Confirmación del Contrato (Firma con Voz)</h4>
+                        <ul class="bullet-list" style="list-style-type:none; padding-left:0;">
+                            ${firmaVozLineasHTML}
+                        </ul>
+
+                        ${refActivado ? `<p><strong>Cliente referido:</strong> ¿<span class="variable">${nombre}</span> usted acredita que es referido del cliente titular de mundo <span class="variable">${referidoPor}</span>? <em>(la respuesta del cliente debe ser un SI)</em>.</p>` : ''}
+
+                        <div class="salvavidas-box" style="border-left-color: var(--success); background-color: var(--success-bg); border-color: var(--success);">
+                            <p style="margin:0; text-align:center;">Agradezco su tiempo en línea y le doy la cordial bienvenida a Mundo</p>
+                            <h3 style="color: var(--success); text-align: center; margin-top: 10px;">¡TU MUNDO TIENES QUE VIVIRLO!</h3>
+                        </div>
+                    `;
+                } else {
+                    // BIOMETRIA MÓVIL (Corto) con multilíneas
+                    let listadoLineasHTML = "";
+                    lineasVendidas.forEach((l, i) => {
+                        listadoLineasHTML += `
+                            <div class="plan-descripcion" style="margin-bottom:10px; margin-top:5px;">
+                                <strong>Línea ${i+1}: <span class="variable">${l.plan}</span></strong> ${l.tipo==='portabilidad'?`(Portabilidad: <span class="variable">${l.numero}</span> - <span class="variable">${l.compania}</span>)`:''} <br>
+                                ${l.datos.desc}
+                            </div>
+                        `;
+                    });
+
+                    const txtDia = document.getElementById('chk-m-prioritario')?.checked ? "el día de hoy" : "al día hábil siguiente";
+
+                    let entregaTexto = entrega === 'domicilio' ? 
+                        `<p>Su chip será enviado a la dirección <span class="variable">${direccion}</span> en un plazo de 2 a 5 días hábiles y recuerde que será contactado por el delivery una vez este se encuentra cerca a su domicilio para la entrega.</p>` : 
+                        `<p>Su chip podrá ser retirado <span class="variable">${txtDia}</span> en cualquiera de nuestras sucursales Mundo con su carnet vigente entre las 09:00 y 18:00 según comuna.</p>`;
+
+                    let facturacionTexto = tipoCliente === 'nuevo' ?
+                        `<p>Nuestro cobro es por mes adelantado y contamos con 6 ciclos de facturación 1, 5, 10, 15, 20 y 25. La primera boleta se genera el día del ciclo asignado más cercano a su fecha de activación. Cuenta con 20 dias para el pago de su boleta y tendrá métodos de pago cómo nuestra sucursal virtual Mundo, Webpay, BancoEstado, Sencillito, Multicaja, entre otros, usando el RUT del titular.</p>` :
+                        `<p>El servicio nuevo se acopla al mismo ciclo de facturación actual <strong>(Ciclo <span class="variable">${ciclo}</span>)</strong> y recuerde que se puede generar un cobro proporcional desde su fecha de activación a su ciclo asignado solo si corresponde. Cuenta con 20 dias para el pago de su boleta y tendrá métodos de pago cómo nuestra sucursal virtual Mundo, Webpay, BancoEstado, Sencillito, Multicaja, entre otros, usando el RUT del titular.</p>`;
+
+                    let activacionTexto = tipoAct === 'prepago_postpago' ? 
+                        `<p>Por último, recuerde que será contactado por el área móvil de portabilidad para solicitar un código que será necesario para la activación de su chip. Al día hábil siguiente de recibir su chip, puede llamar al 6009100100 para activar su número o desde nuestra sucursal virtual en sucursalvirtual.tumundo.cl</p>` : 
+                        `<p>Al día hábil siguiente de recibir su chip, puede llamar al 6009100100 para activar su número o desde nuestra sucursal virtual en sucursalvirtual.tumundo.cl. No olvide que a su correo electrónico le llegará un mail con su número asignado en los casos de línea nueva.</p>`;
+
+                    htmlGenerado = `
+                        <p>Señor/a <span class="variable">${nombre}</span>, identificado con RUT <span class="variable">${rut}</span>, Le recuerdo la oferta anteriormente contratada.</p>
+                        <p>Usted adquiere <strong>${lineasVendidas.length}</strong> línea(s) móvil(es):</p>
+                        
+                        ${listadoLineasHTML}
+                        
+                        <p style="font-weight:bold; color:var(--mundo-primary);">El valor total promocional por sus líneas será de $${formatoMoneda(totalPromo)} mensuales.</p>
+                        <p>Su correo electrónico registrado es <span class="variable">${correo}</span>, y sus números de contacto son; <span class="variable">${num1}</span>${txtNum2}. ¿Correcto?</p>
+                        
+                        ${entregaTexto}
+
+                        <p><strong>Para el tema de facturación:</strong></p>
+                        ${facturacionTexto}
+                        
+                        ${activacionTexto}
+
+                        <div class="salvavidas-box" style="border-left-color: var(--success); background-color: var(--success-bg); border-color: var(--success);">
+                            <h3 style="color: var(--success); margin-top:0;">✅ Cierre de Llamada</h3>
+                            <p style="margin-bottom:0;">Sin más que agregar agradezco su tiempo en línea y le doy la cordial bienvenida a Mundo. ¿cuenta con algún referido o cercano al que le quiere entregar este mismo beneficio?</p>
+                        </div>
+                    `;
+                }
+            }
+
+            contenedor.innerHTML = htmlGenerado;
+            document.getElementById('vista-formulario').classList.remove('active');
+            document.getElementById('vista-lectura').classList.add('active');
+            document.getElementById('step-1').classList.remove('active');
+            document.getElementById('step-2').classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function volverEdicion() {
+            document.getElementById('vista-lectura').classList.remove('active');
+            document.getElementById('vista-formulario').classList.add('active');
+            document.getElementById('step-2').classList.remove('active');
+            document.getElementById('step-1').classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copiarAlPortapapeles() {
+            const divTexto = document.getElementById('contenedor-texto');
+            let textoLimpio = divTexto.innerText.replace(/🚨|✅|⚠️/g, '').replace(/\n{3,}/g, '\n\n').trim();
+            navigator.clipboard.writeText(textoLimpio).then(() => {
+                const btn = document.getElementById('btn-accion-resultado');
+                const originalContent = btn.innerHTML;
+                btn.innerHTML = "¡Copiado!";
+                btn.style.background = "var(--success)";
+                setTimeout(() => {
+                    btn.innerHTML = originalContent;
+                    btn.style.background = "";
+                }, 3000);
+            }).catch(() => alert("Selecciona el texto y presiona Ctrl+C"));
+        }
+    </script>
+</body>
+</html>
